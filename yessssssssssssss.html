@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seahorse Pass</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        #container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Seahorse Pass</h1>
+    <p>Enter the code to start tracking your points:</p>
+    <input type="text" id="codeInput" placeholder="Enter code">
+    <button onclick="checkCode()">Submit</button>
+    
+    <div id="container">
+        <h2>Points: <span id="points">0</span></h2>
+        <input type="text" id="removeCode" placeholder="Enter remove code">
+        <input type="number" id="removeAmount" placeholder="Points to remove">
+        <button onclick="removePoints()">Remove Points</button>
+    </div>
+    
+    <script>
+        let userId = "user123";  // This can be dynamic (e.g., based on login system)
+        let scriptURL = "https://script.google.com/macros/s/AKfycbzQRV1fbbw-ASU6f9BJsHvaZ2Rv1uiTSFN4NtlJy4N3VTLTnksB8qul4Yuy0fnZczld/exec";
+        
+        function updatePoints(points) {
+            document.getElementById("points").textContent = points;
+        }
+
+        async function fetchPoints() {
+            try {
+                let response = await fetch(`${scriptURL}?id=${userId}`);
+                let points = await response.text();
+                updatePoints(points);
+            } catch (error) {
+                console.error("Error fetching points:", error);
+            }
+        }
+
+        async function savePoints(points) {
+            try {
+                await fetch(scriptURL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: `id=${userId}&points=${points}`
+                });
+            } catch (error) {
+                console.error("Error saving points:", error);
+            }
+        }
+
+        function checkCode() {
+            let code = document.getElementById("codeInput").value.trim(); // Trim spaces
+            console.log("Entered Code:", code);
+            if (code === "303483") {
+                console.log("Code Correct! Showing container...");
+                document.getElementById("container").style.display = "block";
+                fetchPoints();
+                startCounting();
+            } else {
+                console.log("Incorrect Code!");
+                alert("Incorrect code!");
+            }
+        }
+
+        function startCounting() {
+            setInterval(async () => {
+                let currentPoints = parseInt(document.getElementById("points").textContent);
+                currentPoints++;
+                updatePoints(currentPoints);
+                savePoints(currentPoints);
+            }, 1000);
+        }
+
+        function removePoints() {
+            let removeCode = document.getElementById("removeCode").value.trim();
+            let removeAmount = parseInt(document.getElementById("removeAmount").value);
+            let currentPoints = parseInt(document.getElementById("points").textContent);
+            
+            if (removeCode === "1928" && !isNaN(removeAmount) && removeAmount > 0) {
+                if (currentPoints >= removeAmount) {
+                    currentPoints -= removeAmount;
+                    updatePoints(currentPoints);
+                    savePoints(currentPoints);
+                } else {
+                    alert("You don't have enough points!");
+                }
+            } else {
+                alert("Invalid code or amount!");
+            }
+        }
+    </script>
+</body>
+</html>
