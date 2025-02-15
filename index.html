@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seahorse Pass</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        #container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Seahorse Pass</h1>
+    <p>Enter the code to start tracking your points:</p>
+    <input type="text" id="codeInput" placeholder="Enter code">
+    <button onclick="checkCode()">Submit</button>
+    
+    <div id="container">
+        <h2>Points: <span id="points">0</span></h2>
+        <input type="text" id="addCode" placeholder="Enter add code">
+        <input type="number" id="addAmount" placeholder="Points to add">
+        <button onclick="addPoints()">Add Points</button>
+        <br><br>
+        <input type="text" id="removeCode" placeholder="Enter remove code">
+        <input type="number" id="removeAmount" placeholder="Points to remove">
+        <button onclick="removePoints()">Remove Points</button>
+        <br><br>
+        <input type="text" id="boostCode" placeholder="Enter boost code">
+        <input type="number" id="boostAmount" placeholder="Points per second">
+        <button onclick="activateBoost()">Increase Points per Second</button>
+    </div>
+    
+    <script>
+        let userId = "User 123";  
+        let scriptURL = "https://script.google.com/macros/s/AKfycbyl81mT5I-TLydcK6xD2Fl8IuTnpWtvXSM8n7T480lCYN6-BB89k7kVqzUDUEv3Qdg-/exec";
+        let pointsPerSecond = 1;
+        let interval;
+
+        async function fetchPoints() {
+            try {
+                let response = await fetch(`${scriptURL}?id=${userId}`);
+                let data = await response.json();
+                
+                let lastTimestamp = data.timestamp || Date.now();
+                let savedPoints = parseInt(data.points) || 0;
+                
+                let timeElapsed = Math.floor((Date.now() - lastTimestamp) / 1000);
+                let newPoints = savedPoints + (timeElapsed * pointsPerSecond);
+
+                updatePoints(newPoints);
+                savePoints(newPoints); 
+            } catch (error) {
+                console.error("Error fetching points:", error);
+            }
+        }
+
+        async function savePoints(points) {
+            try {
+                let timestamp = Date.now(); 
+                await fetch(scriptURL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: `id=${userId}&points=${points}&timestamp=${timestamp}`
+                });
+            } catch (error) {
+                console.error("Error saving points:", error);
+            }
+        }
+
+        function updatePoints(points) {
+            document.getElementById("points").textContent = points;
+        }
+
+        function checkCode() {
+            let code = document.getElementById("codeInput").value.trim();
+            if (code === "303483") {
+                document.getElementById("container").style.display = "block";
+                fetchPoints();
+                startCounting();
+            } else {
+                alert("Incorrect code!");
+            }
+        }
+
+        function startCounting() {
+            clearInterval(interval);
+            interval = setInterval(() => {
+                let currentPoints = parseInt(document.getElementById("points").textContent);
+                currentPoints += pointsPerSecond;
+                updatePoints(currentPoints);
+                savePoints(currentPoints);
+            }, 1000 / pointsPerSecond);
+        }
+
+        function addPoints() {
+            let addCode = document.getElementById("addCode").value.trim();
+            let addAmount = parseInt(document.getElementById("addAmount").value);
+            if (addCode === "1928" && !isNaN(addAmount) && addAmount > 0) {
+                let currentPoints = parseInt(document.getElementById("points").textContent);
+                currentPoints += addAmount;
+                updatePoints(currentPoints);
+                savePoints(currentPoints);
+            } else {
+                alert("Invalid code or amount!");
+            }
+        }
+
+        function removePoints() {
+            let removeCode = document.getElementById("removeCode").value.trim();
+            let removeAmount = parseInt(document.getElementById("removeAmount").value);
+            if (removeCode === "1928" && !isNaN(removeAmount) && removeAmount > 0) {
+                let currentPoints = parseInt(document.getElementById("points").textContent);
+                if (currentPoints >= removeAmount) {
+                    currentPoints -= removeAmount;
+                    updatePoints(currentPoints);
+                    savePoints(currentPoints);
+                } else {
+                    alert("You don't have enough points!");
+                }
+            } else {
+                alert("Invalid code or amount!");
+            }
+        }
+
+        function activateBoost() {
+            let boostCode = document.getElementById("boostCode").value.trim();
+            let boostAmount = parseInt(document.getElementById("boostAmount").value);
+            if (boostCode === "1928" && !isNaN(boostAmount) && boostAmount > 0) {
+                pointsPerSecond = boostAmount;
+                startCounting();
+                alert(`Boost activated! Now gaining +${boostAmount} points per second.`);
+            } else {
+                alert("Invalid code or amount!");
+            }
+        }
+    </script>
+</body>
+</html>
